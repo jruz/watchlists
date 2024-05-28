@@ -42,7 +42,7 @@ async fn get_data() -> Result<Response, serde_json::Error> {
 
 pub async fn get_spot() -> Vec<String> {
     let blacklist = [
-        "TUSD", "USDC", "BUSD", "EUR", "GBP", "PAX", "DAI", "AUD", "USDP",
+        "TUSD", "USDC", "BUSD", "EUR", "GBP", "PAX", "DAI", "AUD", "USDP", "FDUSD",
     ];
     let data = get_data().await;
     match data {
