@@ -4,8 +4,8 @@ clear:
 tmux:
   tmuxinator local
 
-run: clear
-  cargo run -q
+run +ARGS="help": clear
+  cargo run -q {{ARGS}}
 
 watch: clear
   cargo watch --quiet --clear --exec "clippy -- -W clippy::pedantic && cargo run --quiet"

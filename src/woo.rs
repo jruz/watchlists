@@ -4,6 +4,7 @@ use serde_derive::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct Response {
     pub rows: Vec<Row>,
+    #[allow(dead_code)]
     pub success: bool,
 }
 
