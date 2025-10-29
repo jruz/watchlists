@@ -4,6 +4,17 @@ use serde_derive::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct ResponseTicker {
     pub symbol: String,
+    #[serde(deserialize_with = "vol_deserializer")]
+    pub vol: f64,
+}
+
+fn vol_deserializer<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s: String = serde::Deserialize::deserialize(deserializer)?;
+    let f = s.parse::<f64>().unwrap();
+    Ok(f)
 }
 
 #[derive(Deserialize, Debug)]
@@ -38,8 +49,10 @@ async fn get_data() -> Result<Response, serde_json::Error> {
     Ok(parsed)
 }
 
-pub fn filter_data(data: Vec<ResponseTicker>) -> Vec<String> {
+pub fn process_data(mut data: Vec<ResponseTicker>) -> Vec<String> {
     let regex = regex::Regex::new(r"3L|3S|2L|2S|DOWN").unwrap();
+
+    data.sort_by(|a, b| b.vol.partial_cmp(&a.vol).unwrap());
 
     data.iter()
         .map(|row| {
@@ -55,7 +68,7 @@ pub fn filter_data(data: Vec<ResponseTicker>) -> Vec<String> {
 
 pub async fn get_spot() -> Vec<String> {
     if let Ok(data) = get_data().await {
-        let tickers = filter_data(data.data.ticker);
+        let tickers = process_data(data.data.ticker);
         return tickers
             .iter()
             .map(|ticker| format!("KUCOIN:{ticker}USDT"))
@@ -72,59 +85,94 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_filter_data_nonusdt() {
+    async fn test_process_data_sorted() {
         let data: Vec<ResponseTicker> = vec![
             ResponseTicker {
                 symbol: "BTC-USDT".to_string(),
+                vol: 100000.0,
             },
             ResponseTicker {
                 symbol: "ETH-USDT".to_string(),
+                vol: 100.0,
+            },
+            ResponseTicker {
+                symbol: "XMR-USDT".to_string(),
+                vol: 100000000.0,
+            },
+        ];
+        let result = process_data(data);
+        let expected = vec!["XMR".to_string(), "BTC".to_string(), "ETH".to_string()];
+
+        assert_eq!(result, expected)
+    }
+
+    #[tokio::test]
+    async fn test_process_data_nonusdt() {
+        let data: Vec<ResponseTicker> = vec![
+            ResponseTicker {
+                symbol: "BTC-USDT".to_string(),
+                vol: 100.0,
+            },
+            ResponseTicker {
+                symbol: "ETH-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "XMR-ETH".to_string(),
+                vol: 100.0,
             },
         ];
-        let result = filter_data(data);
+        let result = process_data(data);
         let expected = vec!["BTC".to_string(), "ETH".to_string()];
 
         assert_eq!(result, expected)
     }
 
     #[tokio::test]
-    async fn test_filter_data_levered() {
+    async fn test_process_data_levered() {
         let data: Vec<ResponseTicker> = vec![
             ResponseTicker {
                 symbol: "BTC-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "ETH-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "BTC3L-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "BTC3S-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "BTC2L-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "BTC2S-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "WLDUP-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "SUPER-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "JUP-USDT".to_string(),
+                vol: 100.0,
             },
             ResponseTicker {
                 symbol: "BTCDOWN-USDT".to_string(),
+                vol: 100.0,
             },
         ];
-        let result = filter_data(data);
+        let result = process_data(data);
         let expected = vec![
           "BTC".to_string(),
           "ETH".to_string(),
@@ -133,4 +181,5 @@ mod tests {
 
         assert_eq!(result, expected)
     }
+
 }

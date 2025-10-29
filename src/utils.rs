@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{self, BufWriter, Write};
 
 pub fn write_file(lines: &[String], name: &str) -> io::Result<()> {
-    let filename = format!("{}{}{}{}", "dist/", "- C - ", &name, ".txt");
+    let filename = format!("dist/{name}.txt");
     let file = File::create(filename)?;
     let mut writer = BufWriter::new(file);
 

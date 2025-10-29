@@ -1,9 +1,6 @@
 name: WATCHLIST
 root: .
 windows:
-  - VIM:
-      layout: even-horizontal
-      panes:
-        - nvim
-        -
+  - VIM: nvim
+  - SERVER:
   - GIT: gs
