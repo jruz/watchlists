@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo test:*)",
+      "Bash(just test)",
+      "Bash(just test-update-fixtures:*)",
+      "Bash(just generate-fixtures:*)",
+      "Bash(just test-integration:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

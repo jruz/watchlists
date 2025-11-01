@@ -16,10 +16,7 @@ lint:
   cargo clippy -- -W clippy::pedantic
 
 test: clear
-  cargo nextest run -E 'not test(integration)'
+  cargo nextest run
 
-test-integration: clear
-  cargo nextest run -E 'test(integration)' --nocapture
-
-watch-integration:
-  cargo watch -x nextest run -E 'test(integration)'
+generate-fixtures: clear
+  cargo run --example generate_fixtures

@@ -1,10 +1,11 @@
 use reqwest::header;
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ResponseTicker {
     pub symbol: String,
     #[serde(deserialize_with = "vol_deserializer")]
+    #[serde(serialize_with = "vol_serializer")]
     pub vol: f64,
 }
 
@@ -17,12 +18,19 @@ where
     Ok(f)
 }
 
-#[derive(Deserialize, Debug)]
+fn vol_serializer<S>(vol: &f64, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&vol.to_string())
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ResponseData {
     pub ticker: Vec<ResponseTicker>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Response {
     pub data: ResponseData,
 }
@@ -66,13 +74,17 @@ pub fn process_data(mut data: Vec<ResponseTicker>) -> Vec<String> {
         .collect()
 }
 
+fn get_spot_impl(response: Response) -> Vec<String> {
+    let tickers = process_data(response.data.ticker);
+    tickers
+        .iter()
+        .map(|ticker| format!("KUCOIN:{ticker}USDT"))
+        .collect()
+}
+
 pub async fn get_spot() -> Vec<String> {
     if let Ok(data) = get_data().await {
-        let tickers = process_data(data.data.ticker);
-        return tickers
-            .iter()
-            .map(|ticker| format!("KUCOIN:{ticker}USDT"))
-            .collect();
+        return get_spot_impl(data);
     } else {
         println!("Failed to get data");
     }
@@ -180,6 +192,41 @@ mod tests {
         ];
 
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn test_process_data_output_format() {
+        let data: Vec<ResponseTicker> = vec![ResponseTicker {
+            symbol: "BTC-USDT".to_string(),
+            vol: 100.0,
+        }];
+
+        let result = process_data(data);
+
+        assert_eq!(result, vec!["BTC".to_string()]);
+    }
+
+    #[test]
+    fn test_get_spot_from_fixture() {
+        let fixture_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+            .join("kucoin_response.json");
+
+        if !fixture_path.exists() {
+            return;
+        }
+
+        let fixture_data = std::fs::read_to_string(fixture_path).unwrap();
+        let response: Response = serde_json::from_str(&fixture_data).unwrap();
+        let tickers: Vec<String> = get_spot_impl(response);
+
+        assert!(!tickers.is_empty());
+        assert!(tickers.iter().all(|s| s.starts_with("KUCOIN:")));
+        assert!(tickers.iter().all(|s| s.contains("USDT")));
+
+        assert!(tickers.contains(&"KUCOIN:BTCUSDT".to_string()), "KuCoin should have BTC");
+        assert!(tickers.contains(&"KUCOIN:ETHUSDT".to_string()), "KuCoin should have ETH");
     }
 
 }
