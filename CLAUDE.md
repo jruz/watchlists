@@ -115,4 +115,4 @@ The GitHub Actions workflow:
 
 ## Rust Toolchain
 
-Project uses Rust 1.82.0 (specified in `rust-toolchain` file).
+Project uses Rust 1.91.0 (specified in `rust-toolchain` file and `.mise.toml`).

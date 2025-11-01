@@ -6,7 +6,11 @@
       "Bash(just test-update-fixtures:*)",
       "Bash(just generate-fixtures:*)",
       "Bash(just test-integration:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cargo --version:*)",
+      "Bash(rustc:*)",
+      "WebSearch",
+      "Bash(cargo update:*)"
     ],
     "deny": [],
     "ask": []
