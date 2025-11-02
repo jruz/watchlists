@@ -44,11 +44,5 @@ jobs:
     - name: Cache Nix store
       uses: DeterminateSystems/magic-nix-cache-action@v8
 
-    - name: Generate fresh fixtures
-      run: nix develop --command just generate-fixtures
-
-    - name: Show fixture content for debugging
-      run: head -100 tests/fixtures/binance_response.json
-
     - name: Run tests
       run: nix develop --command just test
