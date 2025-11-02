@@ -17,39 +17,15 @@ lint:
 
 lint-allows:
   #!/usr/bin/env bash
-  echo "Checking for new allow attributes in source code..."
-  BASELINE=".allowed-lints-baseline.txt"
-  CURRENT=$(mktemp)
-
-  rg --type rust '#\[allow\(clippy' src/ --no-heading --no-filename 2>/dev/null | sort > "$CURRENT" || touch "$CURRENT"
-
-  if [ ! -f "$BASELINE" ]; then
-    echo "⚠️  Warning: No baseline file found at $BASELINE"
-    echo "Creating baseline with current allows..."
-    cp "$CURRENT" "$BASELINE"
-    echo "✅ Baseline created"
-    rm "$CURRENT"
-    exit 0
-  fi
-
-  DIFF=$(diff "$BASELINE" "$CURRENT")
-
-  if [ -n "$DIFF" ]; then
-    echo "❌ Error: New allow(clippy) attributes detected!"
+  echo "Checking for allow(clippy) attributes in source code..."
+  if rg --type rust '#\[allow\(clippy' src/; then
     echo ""
-    echo "Differences from baseline:"
-    diff "$BASELINE" "$CURRENT" || true
-    echo ""
+    echo "❌ Error: Found allow(clippy) attributes in source code"
     echo "Please refactor the code to avoid using clippy allows"
-    echo "If these allows are intentional and unavoidable, update the baseline:"
-    echo "  rg --type rust '#\[allow\(clippy' src/ --no-heading --no-filename | sort > $BASELINE"
-    rm "$CURRENT"
     exit 1
   else
-    echo "✅ No new allow attributes detected"
+    echo "✅ No allow(clippy) attributes found"
   fi
-
-  rm "$CURRENT"
 
 fmt:
   nix develop --command cargo fmt --all -- --check

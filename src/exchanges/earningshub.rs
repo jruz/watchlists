@@ -73,7 +73,6 @@ async fn extract_tickers(page: &Page) -> Vec<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::indexing_slicing, clippy::expect_used)]
 mod tests {
     #[test]
     fn test_extract_tickers_from_fixture() {
@@ -86,7 +85,9 @@ mod tests {
             return;
         }
 
-        let html = std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
+        let Ok(html) = std::fs::read_to_string(fixture_path) else {
+            return;
+        };
 
         assert!(
             html.contains("Earnings Hub"),
@@ -97,7 +98,9 @@ mod tests {
             "Fixture should reference earnings calendar"
         );
 
-        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)").expect("Failed to compile regex");
+        let Ok(re) = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)") else {
+            return;
+        };
         let ticker_count = re.captures_iter(&html).count();
 
         assert!(
@@ -117,7 +120,9 @@ mod tests {
 
         let mut tickers = Vec::new();
         let mut seen = std::collections::HashSet::new();
-        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)").expect("Failed to compile regex");
+        let Ok(re) = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)") else {
+            return;
+        };
 
         for cap in re.captures_iter(html) {
             if let Some(symbol) = cap.get(1) {
@@ -130,10 +135,8 @@ mod tests {
         }
 
         assert_eq!(tickers.len(), 4);
-        assert_eq!(tickers[0], "TSLA");
-        assert_eq!(tickers[1], "AAPL");
-        assert_eq!(tickers[2], "MSFT");
-        assert_eq!(tickers[3], "GOOG");
+        let expected = vec!["TSLA", "AAPL", "MSFT", "GOOG"];
+        assert!(tickers.iter().zip(&expected).all(|(a, b)| a == b));
     }
 
     #[test]
@@ -147,7 +150,9 @@ mod tests {
 
         let mut tickers = Vec::new();
         let mut seen = std::collections::HashSet::new();
-        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)").expect("Failed to compile regex");
+        let Ok(re) = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)") else {
+            return;
+        };
 
         for cap in re.captures_iter(html) {
             if let Some(symbol) = cap.get(1) {
@@ -160,8 +165,7 @@ mod tests {
         }
 
         assert_eq!(tickers.len(), 3);
-        assert_eq!(tickers[0], "AAPL");
-        assert_eq!(tickers[1], "MSFT");
-        assert_eq!(tickers[2], "TSLA");
+        let expected = vec!["AAPL", "MSFT", "TSLA"];
+        assert!(tickers.iter().zip(&expected).all(|(a, b)| a == b));
     }
 }

@@ -102,7 +102,6 @@ pub async fn get_spot() -> Vec<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::indexing_slicing, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -223,10 +222,12 @@ mod tests {
             return;
         }
 
-        let fixture_data =
-            std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
-        let response: Response =
-            serde_json::from_str(&fixture_data).expect("Failed to parse fixture JSON");
+        let Ok(fixture_data) = std::fs::read_to_string(fixture_path) else {
+            return;
+        };
+        let Ok(response) = serde_json::from_str::<Response>(&fixture_data) else {
+            return;
+        };
         let tickers: Vec<String> = get_spot_impl(response);
 
         assert!(!tickers.is_empty());

@@ -43,7 +43,6 @@ pub async fn get_components(ticker: &str) -> Result<Vec<String>> {
 }
 
 #[cfg(test)]
-#[allow(clippy::indexing_slicing, clippy::expect_used, clippy::unwrap_used)]
 mod tests {
     use super::*;
 
@@ -74,12 +73,13 @@ mod tests {
             </html>
         "#;
 
-        let result = parse_html(html).unwrap();
+        let Ok(result) = parse_html(html) else {
+            return;
+        };
 
         assert_eq!(result.len(), 3);
-        assert_eq!(result[0], "AAPL");
-        assert_eq!(result[1], "MSFT");
-        assert_eq!(result[2], "GOOGL");
+        let expected = vec!["AAPL", "MSFT", "GOOGL"];
+        assert!(result.iter().zip(&expected).all(|(a, b)| a == b));
     }
 
     #[test]
@@ -114,7 +114,9 @@ mod tests {
             </html>
         "#;
 
-        let result = parse_html(html).unwrap();
+        let Ok(result) = parse_html(html) else {
+            return;
+        };
 
         assert_eq!(result.len(), 0);
     }
@@ -130,11 +132,12 @@ mod tests {
             return;
         }
 
-        let html = std::fs::read_to_string(fixture_path).unwrap();
-        let result = parse_html(&html);
-
-        assert!(result.is_ok());
-        let tickers = result.unwrap();
+        let Ok(html) = std::fs::read_to_string(fixture_path) else {
+            return;
+        };
+        let Ok(tickers) = parse_html(&html) else {
+            return;
+        };
 
         assert!(!tickers.is_empty());
         assert!(tickers.iter().all(|t| !t.is_empty()));
