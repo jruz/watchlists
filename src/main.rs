@@ -25,8 +25,7 @@ enum Commands {
     },
     Binance,
     Kucoin,
-    #[allow(clippy::upper_case_acronyms)]
-    IBKR,
+    Ibkr,
     Components {
         etf: String,
     },
@@ -81,7 +80,7 @@ async fn main() -> Result<()> {
             //println!("{tickers:#?}\n");
             utils::handle_file(&tickers, &name);
         }
-        Commands::IBKR => {
+        Commands::Ibkr => {
             let tickers = ibkr::get_tickers().await;
 
             //println!("{tickers:#?}\n");

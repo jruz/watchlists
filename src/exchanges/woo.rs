@@ -95,7 +95,7 @@ pub async fn get_spot() -> Vec<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::indexing_slicing, clippy::expect_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -142,8 +142,8 @@ mod tests {
         let result = process_perp(&symbols);
 
         assert_eq!(result.len(), 2);
-        assert_eq!(result[0], "WOONETWORK:BTCUSDT.P");
-        assert_eq!(result[1], "WOONETWORK:ETHUSDT.P");
+        let expected = vec!["WOONETWORK:BTCUSDT.P", "WOONETWORK:ETHUSDT.P"];
+        assert!(result.iter().zip(&expected).all(|(a, b)| a == b));
     }
 
     #[test]
@@ -157,8 +157,8 @@ mod tests {
         let result = process_spot(&symbols);
 
         assert_eq!(result.len(), 2);
-        assert_eq!(result[0], "WOONETWORK:BTCUSDT");
-        assert_eq!(result[1], "WOONETWORK:ETHUSDT");
+        let expected = vec!["WOONETWORK:BTCUSDT", "WOONETWORK:ETHUSDT"];
+        assert!(result.iter().zip(&expected).all(|(a, b)| a == b));
     }
 
     #[test]
@@ -168,9 +168,9 @@ mod tests {
         let result = process_perp(&symbols);
 
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0], "WOONETWORK:BTCUSDT.P");
-        assert!(result[0].contains(':'));
-        assert!(result[0].ends_with(".P"));
+        assert!(result.iter().all(|s| s == "WOONETWORK:BTCUSDT.P"));
+        assert!(result.iter().all(|s| s.contains(':')));
+        assert!(result.iter().all(|s| s.ends_with(".P")));
     }
 
     #[test]
@@ -180,8 +180,8 @@ mod tests {
         let result = process_spot(&symbols);
 
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0], "WOONETWORK:ETHUSDT");
-        assert!(result[0].contains(':'));
+        assert!(result.iter().all(|s| s == "WOONETWORK:ETHUSDT"));
+        assert!(result.iter().all(|s| s.contains(':')));
     }
 
     #[test]
@@ -192,13 +192,14 @@ mod tests {
             .join("woo_response.json");
 
         if !fixture_path.exists() {
+            eprintln!("Skipping test: fixture file not found");
             return;
         }
 
-        let fixture_data =
-            std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
-        let response: Response =
-            serde_json::from_str(&fixture_data).expect("Failed to parse fixture JSON");
+        let fixture_data = std::fs::read_to_string(fixture_path)
+            .expect("Failed to read woo fixture file - file may be corrupted");
+        let response: Response = serde_json::from_str(&fixture_data)
+            .expect("Failed to parse woo fixture JSON - file may be corrupted");
         let symbols = filter_symbols(response.rows);
 
         let perps = process_perp(&symbols);

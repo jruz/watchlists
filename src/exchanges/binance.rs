@@ -65,7 +65,7 @@ pub async fn get_spot() -> Vec<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::indexing_slicing, clippy::expect_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -103,7 +103,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::indexing_slicing)]
     fn test_process_data_filters_non_trading() {
         let response = Response {
             symbols: vec![
@@ -125,11 +124,10 @@ mod tests {
         let result = process_data(response);
 
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0], "BINANCE:BTCUSDT");
+        assert!(result.contains(&"BINANCE:BTCUSDT".to_string()));
     }
 
     #[test]
-    #[allow(clippy::indexing_slicing)]
     fn test_process_data_filters_blacklisted() {
         let response = Response {
             symbols: vec![
@@ -163,11 +161,10 @@ mod tests {
         let result = process_data(response);
 
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0], "BINANCE:BTCUSDT");
+        assert!(result.contains(&"BINANCE:BTCUSDT".to_string()));
     }
 
     #[test]
-    #[allow(clippy::indexing_slicing)]
     fn test_process_data_output_format() {
         let response = Response {
             symbols: vec![Symbol {
@@ -181,8 +178,8 @@ mod tests {
         let result = process_data(response);
 
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0], "BINANCE:BTCUSDT");
-        assert!(result[0].contains(':'));
+        assert!(result.iter().all(|s| s == "BINANCE:BTCUSDT"));
+        assert!(result.iter().all(|s| s.contains(':')));
     }
 
     #[test]
@@ -193,13 +190,14 @@ mod tests {
             .join("binance_response.json");
 
         if !fixture_path.exists() {
+            eprintln!("Skipping test: fixture file not found");
             return;
         }
 
-        let fixture_data =
-            std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
-        let response: Response =
-            serde_json::from_str(&fixture_data).expect("Failed to parse fixture JSON");
+        let fixture_data = std::fs::read_to_string(&fixture_path)
+            .expect("Failed to read binance fixture file - file may be corrupted");
+        let response: Response = serde_json::from_str(&fixture_data)
+            .expect("Failed to parse binance fixture JSON - file may be corrupted");
 
         let result = process_data(response);
 

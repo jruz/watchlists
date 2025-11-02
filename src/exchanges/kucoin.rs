@@ -102,7 +102,7 @@ pub async fn get_spot() -> Vec<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::indexing_slicing, clippy::expect_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -220,13 +220,14 @@ mod tests {
             .join("kucoin_response.json");
 
         if !fixture_path.exists() {
+            eprintln!("Skipping test: fixture file not found");
             return;
         }
 
-        let fixture_data =
-            std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
-        let response: Response =
-            serde_json::from_str(&fixture_data).expect("Failed to parse fixture JSON");
+        let fixture_data = std::fs::read_to_string(fixture_path)
+            .expect("Failed to read kucoin fixture file - file may be corrupted");
+        let response: Response = serde_json::from_str(&fixture_data)
+            .expect("Failed to parse kucoin fixture JSON - file may be corrupted");
         let tickers: Vec<String> = get_spot_impl(response);
 
         assert!(!tickers.is_empty());

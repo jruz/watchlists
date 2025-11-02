@@ -8,76 +8,44 @@ fn fixture_path(filename: &str) -> PathBuf {
         .join(filename)
 }
 
-#[allow(clippy::print_stdout)]
+async fn fetch_url(url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    use reqwest::header;
+    let client = reqwest::Client::new();
+    let res = client
+        .get(url)
+        .header(header::USER_AGENT, "Mozilla/5.0")
+        .send()
+        .await?
+        .text()
+        .await?;
+    Ok(res)
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Generating test fixtures from live APIs...\n");
+    eprintln!("Generating test fixtures from live APIs...\n");
 
-    println!("→ Fetching Binance data...");
-    {
-        use reqwest::header;
-        let client = reqwest::Client::new();
-        let res = client
-            .get("https://api.binance.com/api/v3/exchangeInfo?permissions=SPOT")
-            .header(header::USER_AGENT, "Mozilla/5.0")
-            .send()
-            .await?
-            .text()
-            .await?;
+    eprintln!("→ Fetching Binance data...");
+    let res = fetch_url("https://api.binance.com/api/v3/exchangeInfo?permissions=SPOT").await?;
+    fs::write(fixture_path("binance_response.json"), &res)?;
+    eprintln!("  ✓ Generated binance_response.json");
 
-        fs::write(fixture_path("binance_response.json"), &res)?;
-        println!("  ✓ Generated binance_response.json");
-    }
+    eprintln!("→ Fetching KuCoin data...");
+    let res = fetch_url("https://api.kucoin.com/api/v1/market/allTickers").await?;
+    fs::write(fixture_path("kucoin_response.json"), &res)?;
+    eprintln!("  ✓ Generated kucoin_response.json");
 
-    println!("→ Fetching KuCoin data...");
-    {
-        use reqwest::header;
-        let client = reqwest::Client::new();
-        let res = client
-            .get("https://api.kucoin.com/api/v1/market/allTickers")
-            .header(header::USER_AGENT, "Mozilla/5.0")
-            .send()
-            .await?
-            .text()
-            .await?;
+    eprintln!("→ Fetching WOO data...");
+    let res = fetch_url("https://api.woo.org/v1/public/info").await?;
+    fs::write(fixture_path("woo_response.json"), &res)?;
+    eprintln!("  ✓ Generated woo_response.json");
 
-        fs::write(fixture_path("kucoin_response.json"), &res)?;
-        println!("  ✓ Generated kucoin_response.json");
-    }
+    eprintln!("→ Fetching StockAnalysis data (SPY)...");
+    let res = fetch_url("https://stockanalysis.com/etf/spy/holdings").await?;
+    fs::write(fixture_path("stockanalysis_spy.html"), &res)?;
+    eprintln!("  ✓ Generated stockanalysis_spy.html");
 
-    println!("→ Fetching WOO data...");
-    {
-        use reqwest::header;
-        let client = reqwest::Client::new();
-        let res = client
-            .get("https://api.woo.org/v1/public/info")
-            .header(header::USER_AGENT, "Mozilla/5.0")
-            .send()
-            .await?
-            .text()
-            .await?;
-
-        fs::write(fixture_path("woo_response.json"), &res)?;
-        println!("  ✓ Generated woo_response.json");
-    }
-
-    println!("→ Fetching StockAnalysis data (SPY)...");
-    {
-        use reqwest::header;
-        let client = reqwest::Client::new();
-        let res = client
-            .get("https://stockanalysis.com/etf/spy/holdings")
-            .header(header::USER_AGENT, "Mozilla/5.0")
-            .send()
-            .await?
-            .text()
-            .await?;
-
-        fs::write(fixture_path("stockanalysis_spy.html"), &res)?;
-        println!("  ✓ Generated stockanalysis_spy.html");
-    }
-
-    println!("→ Fetching EarningsHub data (this-week) with Playwright...");
+    eprintln!("→ Fetching EarningsHub data (this-week) with Playwright...");
     {
         use chrono::{Datelike, Duration, Local};
         use playwright::api::playwright::Playwright;
@@ -116,11 +84,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         fs::write(fixture_path("earningshub_this_week.html"), &content)?;
 
         browser.close().await?;
-        println!("  ✓ Generated earningshub_this_week.html");
+        eprintln!("  ✓ Generated earningshub_this_week.html");
     }
 
-    println!("\n✅ All fixtures generated successfully!");
-    println!("   Location: tests/fixtures/");
+    eprintln!("\n✅ All fixtures generated successfully!");
+    eprintln!("   Location: tests/fixtures/");
 
     Ok(())
 }
