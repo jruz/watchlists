@@ -4,7 +4,7 @@ use color_eyre::eyre::Result;
 mod exchanges;
 mod utils;
 
-use exchanges::{binance, earningshub, ibkr, kucoin, stockanalysis, woo};
+use exchanges::{binance, coingecko, earningshub, ibkr, kucoin, stockanalysis, woo};
 
 #[derive(Parser)]
 #[command(name="Watchlist", version, about, long_about = None)]
@@ -25,6 +25,7 @@ enum Commands {
     },
     Binance,
     Kucoin,
+    Coingecko,
     Ibkr,
     Components {
         etf: String,
@@ -76,6 +77,13 @@ async fn main() -> Result<()> {
         Commands::Kucoin => {
             let tickers = kucoin::get_spot().await;
             let name = get_crypto_file_name("KUCOIN-SPOT");
+
+            //println!("{tickers:#?}\n");
+            utils::handle_file(&tickers, &name);
+        }
+        Commands::Coingecko => {
+            let tickers = coingecko::get_top_100().await;
+            let name = get_crypto_file_name("COINGECKO-TOP100");
 
             //println!("{tickers:#?}\n");
             utils::handle_file(&tickers, &name);
