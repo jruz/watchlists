@@ -35,7 +35,12 @@
       "Bash(cargo fmt:*)",
       "Bash(awk:*)",
       "Bash(just ci:*)",
-      "Bash(just check:*)"
+      "Bash(just check:*)",
+      "WebFetch(domain:rust-lang.github.io)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)",
+      "Bash(just lint-allows:*)",
+      "Bash(just fmt-fix)"
     ],
     "deny": [],
     "ask": []

@@ -73,6 +73,7 @@ async fn extract_tickers(page: &Page) -> Vec<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     #[test]
     fn test_extract_tickers_from_fixture() {
@@ -120,9 +121,8 @@ mod tests {
 
         let mut tickers = Vec::new();
         let mut seen = std::collections::HashSet::new();
-        let Ok(re) = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)") else {
-            return;
-        };
+        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)")
+            .expect("Failed to compile regex - pattern is invalid");
 
         for cap in re.captures_iter(html) {
             if let Some(symbol) = cap.get(1) {
@@ -150,9 +150,8 @@ mod tests {
 
         let mut tickers = Vec::new();
         let mut seen = std::collections::HashSet::new();
-        let Ok(re) = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)") else {
-            return;
-        };
+        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)")
+            .expect("Failed to compile regex - pattern is invalid");
 
         for cap in re.captures_iter(html) {
             if let Some(symbol) = cap.get(1) {

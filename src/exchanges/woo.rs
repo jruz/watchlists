@@ -95,6 +95,7 @@ pub async fn get_spot() -> Vec<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -191,15 +192,14 @@ mod tests {
             .join("woo_response.json");
 
         if !fixture_path.exists() {
+            eprintln!("Skipping test: fixture file not found");
             return;
         }
 
-        let Ok(fixture_data) = std::fs::read_to_string(fixture_path) else {
-            return;
-        };
-        let Ok(response) = serde_json::from_str::<Response>(&fixture_data) else {
-            return;
-        };
+        let fixture_data = std::fs::read_to_string(fixture_path)
+            .expect("Failed to read woo fixture file - file may be corrupted");
+        let response: Response = serde_json::from_str(&fixture_data)
+            .expect("Failed to parse woo fixture JSON - file may be corrupted");
         let symbols = filter_symbols(response.rows);
 
         let perps = process_perp(&symbols);

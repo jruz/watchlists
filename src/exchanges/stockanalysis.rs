@@ -43,6 +43,7 @@ pub async fn get_components(ticker: &str) -> Result<Vec<String>> {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -129,15 +130,15 @@ mod tests {
             .join("stockanalysis_spy.html");
 
         if !fixture_path.exists() {
+            eprintln!("Skipping test: fixture file not found");
             return;
         }
 
-        let Ok(html) = std::fs::read_to_string(fixture_path) else {
-            return;
-        };
-        let Ok(tickers) = parse_html(&html) else {
-            return;
-        };
+        let html = std::fs::read_to_string(fixture_path)
+            .expect("Failed to read stockanalysis fixture file - file may be corrupted");
+        let tickers = parse_html(&html).expect(
+            "Failed to parse stockanalysis HTML - file may be corrupted or HTML structure changed",
+        );
 
         assert!(!tickers.is_empty());
         assert!(tickers.iter().all(|t| !t.is_empty()));
