@@ -34,25 +34,25 @@ async fn fetch_data(url: &str) -> Result<String, Box<dyn std::error::Error>> {
     Ok(res)
 }
 
-async fn get_data() -> Result<Response, serde_json::Error> {
-    let res = fetch_data(API_URL).await.expect("Failed to get data");
+async fn get_data() -> Result<Response, Box<dyn std::error::Error>> {
+    let res = fetch_data(API_URL).await?;
     let parsed: Response = serde_json::from_str(&res)?;
     Ok(parsed)
 }
 
-pub fn process_data(data: Response) -> Vec<String> {
+pub fn process_data(response: Response) -> Vec<String> {
     let blacklist = [
         "TUSD", "USDC", "BUSD", "EUR", "GBP", "PAX", "DAI", "AUD", "USDP", "FDUSD", "WBTC",
     ];
 
-    data.symbols
+    response.symbols
         .iter()
         .filter(|row| {
             row.status == "TRADING"
                 && row.quote_asset == "USDT"
                 && !blacklist.contains(&row.base_asset.as_str())
         })
-        .map(|row| format!("{}:{}", EXCHANGE_NAME, row.symbol))
+        .map(|row| format!("{EXCHANGE_NAME}:{}", row.symbol))
         .collect()
 }
 
@@ -64,6 +64,7 @@ pub async fn get_spot() -> Vec<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::indexing_slicing, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -101,6 +102,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::indexing_slicing)]
     fn test_process_data_filters_non_trading() {
         let response = Response {
             symbols: vec![
@@ -126,6 +128,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::indexing_slicing)]
     fn test_process_data_filters_blacklisted() {
         let response = Response {
             symbols: vec![
@@ -163,6 +166,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::indexing_slicing)]
     fn test_process_data_output_format() {
         let response = Response {
             symbols: vec![Symbol {
@@ -191,8 +195,10 @@ mod tests {
             return;
         }
 
-        let fixture_data = std::fs::read_to_string(fixture_path).unwrap();
-        let response: Response = serde_json::from_str(&fixture_data).unwrap();
+        let fixture_data = std::fs::read_to_string(fixture_path)
+            .expect("Failed to read fixture file");
+        let response: Response = serde_json::from_str(&fixture_data)
+            .expect("Failed to parse fixture JSON");
 
         let result = process_data(response);
 

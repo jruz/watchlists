@@ -2,21 +2,19 @@ use color_eyre::eyre::Result;
 use reqwest::header;
 use scraper::{Html, Selector};
 
-async fn get_html(ticker: &str) -> Result<String, serde_json::Error> {
+async fn get_html(ticker: &str) -> Result<String> {
     let api_url = format!("https://stockanalysis.com/etf/{ticker}/holdings");
     let client = reqwest::Client::new();
     let res = client
-        .get(api_url)
+        .get(&api_url)
         .header(
             header::USER_AGENT,
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0",
         )
         .send()
-        .await
-        .expect("Failed to get data")
+        .await?
         .text()
-        .await
-        .expect("Failed to get body");
+        .await?;
 
     Ok(res)
 }
@@ -45,6 +43,7 @@ pub async fn get_components(ticker: &str) -> Result<Vec<String>> {
 }
 
 #[cfg(test)]
+#[allow(clippy::indexing_slicing, clippy::expect_used, clippy::unwrap_used)]
 mod tests {
     use super::*;
 

@@ -8,6 +8,7 @@ fn fixture_path(filename: &str) -> PathBuf {
         .join(filename)
 }
 
+#[allow(clippy::print_stdout)]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Generating test fixtures from live APIs...\n");
@@ -83,7 +84,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let today = Local::now().date_naive();
         let days_since_monday = today.weekday().num_days_from_monday();
-        let monday = today - Duration::days(days_since_monday as i64);
+        let monday = today.checked_sub_signed(Duration::days(i64::from(days_since_monday)))
+            .unwrap_or(today);
         let week_date = monday.format("%Y-%m-%d").to_string();
 
         let playwright = Playwright::initialize().await?;
@@ -92,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let chromium = playwright.chromium();
 
         let chromium_executable = std::env::var("PLAYWRIGHT_CHROMIUM_EXECUTABLE")
-            .expect("PLAYWRIGHT_CHROMIUM_EXECUTABLE not set. Run with: nix develop");
+            .map_err(|_| "PLAYWRIGHT_CHROMIUM_EXECUTABLE not set. Run with: nix develop")?;
 
         let browser = chromium
             .launcher()
@@ -104,13 +106,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let context = browser.context_builder().build().await?;
         let page = context.new_page().await?;
 
-        let url = format!("https://earningshub.com/earnings-calendar/week-of/{}", week_date);
+        let url = format!("https://earningshub.com/earnings-calendar/week-of/{week_date}");
         page.goto_builder(&url)
-            .timeout(60000.0)
+            .timeout(60_000.0)
             .goto()
             .await?;
 
-        page.wait_for_timeout(10000.0).await;
+        page.wait_for_timeout(10_000.0).await;
 
         let content = page.content().await?;
         fs::write(fixture_path("earningshub_this_week.html"), &content)?;

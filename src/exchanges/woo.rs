@@ -17,8 +17,8 @@ pub struct Row {
 
 const EXCHANGE_NAME: &str = "WOONETWORK";
 
-async fn get_data() -> Result<Response, serde_json::Error> {
-    let api_url = "https://api.woo.org/v1/public/info".to_string();
+async fn get_data() -> Result<Response, Box<dyn std::error::Error>> {
+    let api_url = "https://api.woo.org/v1/public/info";
     let client = reqwest::Client::new();
     let res = client
         .get(api_url)
@@ -27,20 +27,17 @@ async fn get_data() -> Result<Response, serde_json::Error> {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0",
         )
         .send()
-        .await
-        .expect("Failed to get data")
+        .await?
         .text()
-        .await
-        .expect("Failed to get body");
+        .await?;
 
-    //println!("RAW: {res:#?}");
-    let parsed: Response = serde_json::from_str(&res).expect("Failed to parse JSON");
+    let parsed: Response = serde_json::from_str(&res)?;
 
     Ok(parsed)
 }
 
-fn filter_symbols(rows: Vec<Row>) -> Vec<String> {
-    rows.iter()
+fn filter_symbols(response: Vec<Row>) -> Vec<String> {
+    response.iter()
         .filter(|row| row.is_stable == 0 && row.is_trading == 1)
         .map(|row| row.symbol.clone())
         .collect()
@@ -58,11 +55,15 @@ pub fn process_perp(symbols: &[String]) -> Vec<String> {
     symbols
         .iter()
         .filter(|symbol| symbol.starts_with("PERP"))
-        .map(|symbol| {
+        .filter_map(|symbol| {
             let parts: Vec<&str> = symbol.split('_').collect();
-            parts[1..].join("")
+            if parts.len() > 1 {
+                Some(parts.get(1..)?.join(""))
+            } else {
+                None
+            }
         })
-        .map(|symbol| format!("{}:{}.P", EXCHANGE_NAME, symbol))
+        .map(|symbol| format!("{EXCHANGE_NAME}:{symbol}.P"))
         .collect()
 }
 
@@ -70,11 +71,15 @@ pub fn process_spot(symbols: &[String]) -> Vec<String> {
     symbols
         .iter()
         .filter(|symbol| symbol.starts_with("SPOT"))
-        .map(|symbol| {
+        .filter_map(|symbol| {
             let parts: Vec<&str> = symbol.split('_').collect();
-            parts[1..].join("")
+            if parts.len() > 1 {
+                Some(parts.get(1..)?.join(""))
+            } else {
+                None
+            }
         })
-        .map(|symbol| format!("{}:{}", EXCHANGE_NAME, symbol))
+        .map(|symbol| format!("{EXCHANGE_NAME}:{symbol}"))
         .collect()
 }
 
@@ -89,6 +94,7 @@ pub async fn get_spot() -> Vec<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::indexing_slicing, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -188,8 +194,10 @@ mod tests {
             return;
         }
 
-        let fixture_data = std::fs::read_to_string(fixture_path).unwrap();
-        let response: Response = serde_json::from_str(&fixture_data).unwrap();
+        let fixture_data = std::fs::read_to_string(fixture_path)
+            .expect("Failed to read fixture file");
+        let response: Response = serde_json::from_str(&fixture_data)
+            .expect("Failed to parse fixture JSON");
         let symbols = filter_symbols(response.rows);
 
         let perps = process_perp(&symbols);

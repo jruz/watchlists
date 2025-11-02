@@ -13,7 +13,12 @@ watch: clear
   nix develop --command cargo watch --quiet --clear --exec "clippy -- -W clippy::pedantic && cargo run --quiet"
 
 lint:
-  nix develop --command cargo clippy -- -W clippy::pedantic
+  #!/usr/bin/env bash
+  if command -v nix &> /dev/null; then
+    nix develop --command cargo clippy --all-targets --all-features -- -D warnings
+  else
+    cargo clippy --all-targets --all-features -- -D warnings
+  fi
 
 test: clear
   #!/usr/bin/env bash

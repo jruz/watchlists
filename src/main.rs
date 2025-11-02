@@ -25,6 +25,7 @@ enum Commands {
     },
     Binance,
     Kucoin,
+    #[allow(clippy::upper_case_acronyms)]
     IBKR,
     Components {
         etf: String,
@@ -47,7 +48,7 @@ fn get_crypto_file_name(name: &str) -> String {
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-    let cli = Cli::try_parse().unwrap_or_else(|e| e.exit());
+    let cli = Cli::parse();
 
     match &cli.command {
         Commands::Woo { perp, spot } => {
@@ -88,7 +89,7 @@ async fn main() -> Result<()> {
             utils::handle_file(&tickers.options, "- Positions - Options");
         }
         Commands::Components { etf } => {
-            let tickers = stockanalysis::get_components(&etf).await?;
+            let tickers = stockanalysis::get_components(etf).await?;
 
             //println!("{tickers:#?}\n");
             let etf = etf.to_uppercase();
@@ -103,17 +104,22 @@ async fn main() -> Result<()> {
             let monday = match earnings_cmd {
                 EarningsCommands::ThisWeek => {
                     let days_since_monday = today.weekday().num_days_from_monday();
-                    today - Duration::days(days_since_monday as i64)
+                    today.checked_sub_signed(Duration::days(i64::from(days_since_monday)))
+                        .unwrap_or(today)
                 }
                 EarningsCommands::NextWeek => {
                     let days_since_monday = today.weekday().num_days_from_monday();
-                    let this_monday = today - Duration::days(days_since_monday as i64);
-                    this_monday + Duration::days(7)
+                    let this_monday = today.checked_sub_signed(Duration::days(i64::from(days_since_monday)))
+                        .unwrap_or(today);
+                    this_monday.checked_add_signed(Duration::days(7))
+                        .unwrap_or(this_monday)
                 }
                 EarningsCommands::TwoWeeks => {
                     let days_since_monday = today.weekday().num_days_from_monday();
-                    let this_monday = today - Duration::days(days_since_monday as i64);
-                    this_monday + Duration::days(14)
+                    let this_monday = today.checked_sub_signed(Duration::days(i64::from(days_since_monday)))
+                        .unwrap_or(today);
+                    this_monday.checked_add_signed(Duration::days(14))
+                        .unwrap_or(this_monday)
                 }
             };
 

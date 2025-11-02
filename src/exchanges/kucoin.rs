@@ -14,7 +14,7 @@ where
     D: serde::Deserializer<'de>,
 {
     let s: String = serde::Deserialize::deserialize(deserializer)?;
-    let f = s.parse::<f64>().unwrap();
+    let f = s.parse::<f64>().map_err(serde::de::Error::custom)?;
     Ok(f)
 }
 
@@ -35,8 +35,8 @@ pub struct Response {
     pub data: ResponseData,
 }
 
-async fn get_data() -> Result<Response, serde_json::Error> {
-    let api_url = "https://api.kucoin.com/api/v1/market/allTickers".to_string();
+async fn get_data() -> Result<Response, Box<dyn std::error::Error>> {
+    let api_url = "https://api.kucoin.com/api/v1/market/allTickers";
     let client = reqwest::Client::new();
     let res = client
         .get(api_url)
@@ -45,32 +45,31 @@ async fn get_data() -> Result<Response, serde_json::Error> {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0",
         )
         .send()
-        .await
-        .expect("Failed to get data")
+        .await?
         .text()
-        .await
-        .expect("Failed to get body");
+        .await?;
 
-    //println!("{res:#?}\n");
-    let parsed: Response = serde_json::from_str(&res).expect("Failed to parse JSON");
+    let parsed: Response = serde_json::from_str(&res)?;
 
     Ok(parsed)
 }
 
-pub fn process_data(mut data: Vec<ResponseTicker>) -> Vec<String> {
-    let regex = regex::Regex::new(r"3L|3S|2L|2S|DOWN").unwrap();
+pub fn process_data(mut tickers: Vec<ResponseTicker>) -> Vec<String> {
+    let Ok(regex) = regex::Regex::new(r"3L|3S|2L|2S|DOWN") else {
+        return Vec::new();
+    };
 
-    data.sort_by(|a, b| b.vol.partial_cmp(&a.vol).unwrap());
+    tickers.sort_by(|a, b| b.vol.partial_cmp(&a.vol).unwrap_or(std::cmp::Ordering::Equal));
 
-    data.iter()
-        .map(|row| {
+    tickers.iter()
+        .filter_map(|row| {
             let parts: Vec<&str> = row.symbol.split('-').collect();
-            let base = parts[0];
-            let quote = parts[1];
-            (base, quote)
+            let base = parts.get(0)?;
+            let quote = parts.get(1)?;
+            Some(((*base).to_string(), (*quote).to_string()))
         })
-        .filter(|(base, quote)| *quote == "USDT" && !regex.is_match(base) && !base.ends_with("UP") && !base.ends_with("DOWN"))
-        .map(|(base, _)| base.to_string())
+        .filter(|(base, quote)| quote == "USDT" && !regex.is_match(base) && !base.ends_with("UP") && !base.ends_with("DOWN"))
+        .map(|(base, _)| base)
         .collect()
 }
 
@@ -83,25 +82,27 @@ fn get_spot_impl(response: Response) -> Vec<String> {
 }
 
 pub async fn get_spot() -> Vec<String> {
-    if let Ok(data) = get_data().await {
-        return get_spot_impl(data);
-    } else {
-        println!("Failed to get data");
+    match get_data().await {
+        Ok(data) => get_spot_impl(data),
+        Err(e) => {
+            eprintln!("Failed to get data: {e}");
+            vec![]
+        }
     }
-    vec![]
 }
 
 
 #[cfg(test)]
+#[allow(clippy::indexing_slicing, clippy::expect_used)]
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_process_data_sorted() {
+    #[test]
+    fn test_process_data_sorted() {
         let data: Vec<ResponseTicker> = vec![
             ResponseTicker {
                 symbol: "BTC-USDT".to_string(),
-                vol: 100000.0,
+                vol: 100_000.0,
             },
             ResponseTicker {
                 symbol: "ETH-USDT".to_string(),
@@ -109,7 +110,7 @@ mod tests {
             },
             ResponseTicker {
                 symbol: "XMR-USDT".to_string(),
-                vol: 100000000.0,
+                vol: 100_000_000.0,
             },
         ];
         let result = process_data(data);
@@ -118,8 +119,8 @@ mod tests {
         assert_eq!(result, expected)
     }
 
-    #[tokio::test]
-    async fn test_process_data_nonusdt() {
+    #[test]
+    fn test_process_data_nonusdt() {
         let data: Vec<ResponseTicker> = vec![
             ResponseTicker {
                 symbol: "BTC-USDT".to_string(),
@@ -140,8 +141,8 @@ mod tests {
         assert_eq!(result, expected)
     }
 
-    #[tokio::test]
-    async fn test_process_data_levered() {
+    #[test]
+    fn test_process_data_levered() {
         let data: Vec<ResponseTicker> = vec![
             ResponseTicker {
                 symbol: "BTC-USDT".to_string(),
@@ -217,8 +218,10 @@ mod tests {
             return;
         }
 
-        let fixture_data = std::fs::read_to_string(fixture_path).unwrap();
-        let response: Response = serde_json::from_str(&fixture_data).unwrap();
+        let fixture_data = std::fs::read_to_string(fixture_path)
+            .expect("Failed to read fixture file");
+        let response: Response = serde_json::from_str(&fixture_data)
+            .expect("Failed to parse fixture JSON");
         let tickers: Vec<String> = get_spot_impl(response);
 
         assert!(!tickers.is_empty());
