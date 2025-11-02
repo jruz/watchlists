@@ -1,16 +1,16 @@
-name: Tests
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: ['**']
   pull_request:
-    branches: [ main ]
+    branches: ['**']
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +23,12 @@ jobs:
 
     - name: Cache Nix store
       uses: DeterminateSystems/magic-nix-cache-action@v8
+
+    - name: Run clippy (strict mode)
+      run: nix develop --command just lint
+
+    - name: Check formatting
+      run: nix develop --command just fmt
 
     - name: Run tests
       run: nix develop --command just test
