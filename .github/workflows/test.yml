@@ -44,9 +44,5 @@ jobs:
       with:
         tool: just,cargo-nextest
 
-    - name: Generate fixtures from live APIs
-      run: just generate-fixtures
-      continue-on-error: false
-
-    - name: Run tests with fresh fixtures
+    - name: Run tests
       run: just test

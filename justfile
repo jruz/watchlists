@@ -16,10 +16,20 @@ lint:
   nix develop --command cargo clippy -- -W clippy::pedantic
 
 test: clear
-  nix develop --command cargo nextest run
+  #!/usr/bin/env bash
+  if command -v nix &> /dev/null; then
+    nix develop --command cargo nextest run
+  else
+    cargo nextest run
+  fi
 
 generate-fixtures: clear
-  nix develop --command cargo run --example generate_fixtures
+  #!/usr/bin/env bash
+  if command -v nix &> /dev/null; then
+    nix develop --command cargo run --example generate_fixtures
+  else
+    cargo run --example generate_fixtures
+  fi
 
 outdated: clear
   nix develop --command cargo upgrade --dry-run
