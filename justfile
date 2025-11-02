@@ -18,11 +18,20 @@ lint:
 fmt:
   nix develop --command cargo fmt --all -- --check
 
+fmt-fix:
+  nix develop --command cargo fmt --all
+
 test: clear
   nix develop --command cargo nextest run
 
 generate-fixtures: clear
-  nix develop --command cargo run --example generate_fixtures
+  nix develop --command cargo run --bin generate_fixtures
+
+check: clear
+  nix develop --command cargo fmt --all -- --check
+  nix develop --command cargo clippy --all-targets --all-features -- -D warnings
+  nix develop --command cargo run --bin generate_fixtures
+  nix develop --command cargo nextest run
 
 outdated: clear
   nix develop --command cargo upgrade --dry-run

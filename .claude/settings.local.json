@@ -32,7 +32,9 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
-      "Bash(cargo fmt:*)"
+      "Bash(cargo fmt:*)",
+      "Bash(awk:*)",
+      "Bash(just ci:*)"
     ],
     "deny": [],
     "ask": []
