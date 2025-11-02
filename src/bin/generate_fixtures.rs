@@ -40,6 +40,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     fs::write(fixture_path("woo_response.json"), &res)?;
     eprintln!("  ✓ Generated woo_response.json");
 
+    eprintln!("→ Fetching CoinGecko data...");
+    let res = fetch_url("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1").await?;
+    fs::write(fixture_path("coingecko_response.json"), &res)?;
+    eprintln!("  ✓ Generated coingecko_response.json");
+
     eprintln!("→ Fetching StockAnalysis data (SPY)...");
     let res = fetch_url("https://stockanalysis.com/etf/spy/holdings").await?;
     fs::write(fixture_path("stockanalysis_spy.html"), &res)?;

@@ -1,5 +1,6 @@
 pub mod binance;
 pub mod coinbase;
+pub mod coingecko;
 pub mod earningshub;
 pub mod ibkr;
 pub mod kucoin;

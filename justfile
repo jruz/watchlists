@@ -7,7 +7,7 @@ tmux:
   tmuxinator local
 
 run +ARGS="help": clear
-  nix develop --command cargo run {{ARGS}}
+  nix develop --command cargo run --bin watchlist {{ARGS}}
 
 watch: clear
   nix develop --command cargo watch --quiet --clear --exec "clippy -- -W clippy::pedantic && cargo run --quiet"
