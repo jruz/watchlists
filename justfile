@@ -15,6 +15,9 @@ watch: clear
 lint:
   nix develop --command cargo clippy --all-targets --all-features -- -D warnings
 
+fmt:
+  nix develop --command cargo fmt --all -- --check
+
 test: clear
   nix develop --command cargo nextest run
 
