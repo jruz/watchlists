@@ -44,8 +44,5 @@ jobs:
     - name: Cache Nix store
       uses: DeterminateSystems/magic-nix-cache-action@v8
 
-    - name: Generate fresh fixtures
-      run: nix develop --command just generate-fixtures
-
     - name: Run tests
       run: nix develop --command just test
