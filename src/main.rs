@@ -26,10 +26,18 @@ enum Commands {
     Binance,
     Kucoin,
     IBKR,
-    StockAnalysis {
+    Components {
         etf: String,
     },
+    #[command(subcommand)]
+    Earnings(EarningsCommands),
+}
+
+#[derive(Subcommand)]
+enum EarningsCommands {
     ThisWeek,
+    NextWeek,
+    TwoWeeks,
 }
 
 fn get_crypto_file_name(name: &str) -> String {
@@ -79,7 +87,7 @@ async fn main() -> Result<()> {
             utils::handle_file(&tickers.stocks, "- Positions - Stocks");
             utils::handle_file(&tickers.options, "- Positions - Options");
         }
-        Commands::StockAnalysis { etf } => {
+        Commands::Components { etf } => {
             let tickers = stockanalysis::get_components(&etf).await?;
 
             //println!("{tickers:#?}\n");
@@ -87,11 +95,38 @@ async fn main() -> Result<()> {
             let file_name = format!("- E - {etf}");
             utils::handle_file(&tickers, &file_name);
         }
-        Commands::ThisWeek => {
-            let tickers = earningshub::get_this_week().await;
+        Commands::Earnings(earnings_cmd) => {
+            use chrono::{Datelike, Duration, Local};
 
-            //println!("{tickers:#?}\n");
-            utils::handle_file(&tickers, "- Earnings - This Week");
+            let today = Local::now().date_naive();
+
+            let monday = match earnings_cmd {
+                EarningsCommands::ThisWeek => {
+                    let days_since_monday = today.weekday().num_days_from_monday();
+                    today - Duration::days(days_since_monday as i64)
+                }
+                EarningsCommands::NextWeek => {
+                    let days_since_monday = today.weekday().num_days_from_monday();
+                    let this_monday = today - Duration::days(days_since_monday as i64);
+                    this_monday + Duration::days(7)
+                }
+                EarningsCommands::TwoWeeks => {
+                    let days_since_monday = today.weekday().num_days_from_monday();
+                    let this_monday = today - Duration::days(days_since_monday as i64);
+                    this_monday + Duration::days(14)
+                }
+            };
+
+            let week_date = monday.format("%Y-%m-%d").to_string();
+            let tickers = earningshub::get_earnings_week(&week_date).await;
+
+            let file_name = match earnings_cmd {
+                EarningsCommands::ThisWeek => "- Earnings - This Week",
+                EarningsCommands::NextWeek => "- Earnings - Next Week",
+                EarningsCommands::TwoWeeks => "- Earnings - Two Weeks",
+            };
+
+            utils::handle_file(&tickers, file_name);
         }
     }
     Ok(())

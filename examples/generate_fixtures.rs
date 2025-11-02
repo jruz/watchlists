@@ -79,6 +79,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("→ Fetching EarningsHub data (this-week) with Playwright...");
     {
         use playwright::api::playwright::Playwright;
+        use chrono::{Datelike, Duration, Local};
+
+        let today = Local::now().date_naive();
+        let days_since_monday = today.weekday().num_days_from_monday();
+        let monday = today - Duration::days(days_since_monday as i64);
+        let week_date = monday.format("%Y-%m-%d").to_string();
 
         let playwright = Playwright::initialize().await?;
         playwright.prepare()?;
@@ -98,7 +104,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let context = browser.context_builder().build().await?;
         let page = context.new_page().await?;
 
-        page.goto_builder("https://earningshub.com/earnings-calendar/this-week")
+        let url = format!("https://earningshub.com/earnings-calendar/week-of/{}", week_date);
+        page.goto_builder(&url)
             .timeout(60000.0)
             .goto()
             .await?;

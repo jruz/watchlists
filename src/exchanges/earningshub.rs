@@ -1,6 +1,6 @@
 use playwright::api::{playwright::Playwright, Page};
 
-pub async fn get_this_week() -> Vec<String> {
+pub async fn get_earnings_week(week_date: &str) -> Vec<String> {
     let playwright = Playwright::initialize().await.expect("Failed to initialize playwright");
     playwright.prepare().expect("Failed to prepare playwright");
 
@@ -28,7 +28,8 @@ pub async fn get_this_week() -> Vec<String> {
         .await
         .expect("Failed to create page");
 
-    page.goto_builder("https://earningshub.com/earnings-calendar/this-week")
+    let url = format!("https://earningshub.com/earnings-calendar/week-of/{}", week_date);
+    page.goto_builder(&url)
         .timeout(60000.0)
         .goto()
         .await
@@ -46,15 +47,17 @@ pub async fn get_this_week() -> Vec<String> {
 async fn extract_tickers(page: &Page) -> Vec<String> {
     let js_code = r#"
         () => {
-            const symbols = new Set();
+            const symbols = [];
+            const seen = new Set();
             document.querySelectorAll('a[href*="?symbol="]').forEach(el => {
                 const href = el.getAttribute('href');
                 const match = href.match(/[?&]symbol=([A-Z0-9.-]+)/);
-                if (match && match[1]) {
-                    symbols.add(match[1]);
+                if (match && match[1] && !seen.has(match[1])) {
+                    symbols.push(match[1]);
+                    seen.add(match[1]);
                 }
             });
-            return Array.from(symbols).sort();
+            return symbols;
         }
     "#;
 
@@ -63,10 +66,7 @@ async fn extract_tickers(page: &Page) -> Vec<String> {
     match result {
         Ok(value) => {
             let tickers: Vec<String> = serde_json::from_value(value)
-                .unwrap_or_else(|_| Vec::new())
-                .iter()
-                .map(|s: &String| format!("NASDAQ:{}", s))
-                .collect();
+                .unwrap_or_else(|_| Vec::new());
             tickers
         }
         Err(e) => {
@@ -78,8 +78,6 @@ async fn extract_tickers(page: &Page) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_extract_tickers_from_fixture() {
         let fixture_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -103,20 +101,61 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_tickers_basic() {
-        let html = r#"<a href="/earnings-calendar/this-week?symbol=AAPL">Apple</a><a href="/earnings-calendar/this-week?symbol=MSFT">Microsoft</a>"#;
+    fn test_extract_tickers_preserves_document_order() {
+        let html = r#"
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=TSLA">Tesla</a>
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=AAPL">Apple</a>
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=MSFT">Microsoft</a>
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=GOOG">Google</a>
+        "#;
 
         let mut tickers = Vec::new();
+        let mut seen = std::collections::HashSet::new();
         let re = regex::Regex::new(r#"[?&]symbol=([A-Z0-9.-]+)"#).unwrap();
 
         for cap in re.captures_iter(html) {
             if let Some(symbol) = cap.get(1) {
-                tickers.push(format!("NASDAQ:{}", symbol.as_str()));
+                let sym = symbol.as_str();
+                if !seen.contains(sym) {
+                    tickers.push(sym.to_string());
+                    seen.insert(sym.to_string());
+                }
             }
         }
 
-        assert_eq!(tickers.len(), 2);
-        assert!(tickers.contains(&"NASDAQ:AAPL".to_string()));
-        assert!(tickers.contains(&"NASDAQ:MSFT".to_string()));
+        assert_eq!(tickers.len(), 4);
+        assert_eq!(tickers[0], "TSLA");
+        assert_eq!(tickers[1], "AAPL");
+        assert_eq!(tickers[2], "MSFT");
+        assert_eq!(tickers[3], "GOOG");
+    }
+
+    #[test]
+    fn test_extract_tickers_deduplicates() {
+        let html = r#"
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=AAPL">Apple Morning</a>
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=MSFT">Microsoft</a>
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=AAPL">Apple Afternoon</a>
+            <a href="/earnings-calendar/week-of/2025-11-10?symbol=TSLA">Tesla</a>
+        "#;
+
+        let mut tickers = Vec::new();
+        let mut seen = std::collections::HashSet::new();
+        let re = regex::Regex::new(r#"[?&]symbol=([A-Z0-9.-]+)"#).unwrap();
+
+        for cap in re.captures_iter(html) {
+            if let Some(symbol) = cap.get(1) {
+                let sym = symbol.as_str();
+                if !seen.contains(sym) {
+                    tickers.push(sym.to_string());
+                    seen.insert(sym.to_string());
+                }
+            }
+        }
+
+        assert_eq!(tickers.len(), 3);
+        assert_eq!(tickers[0], "AAPL");
+        assert_eq!(tickers[1], "MSFT");
+        assert_eq!(tickers[2], "TSLA");
     }
 }
