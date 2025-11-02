@@ -20,7 +20,10 @@
       "Bash(just run:*)",
       "WebFetch(domain:earningshub.com)",
       "WebFetch(domain:docs.rs)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)"
     ],
     "deny": [],
     "ask": []
