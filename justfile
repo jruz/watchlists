@@ -1,7 +1,7 @@
 set dotenv-load
 
 clear:
-  clear
+  -clear
 
 tmux:
   tmuxinator local
