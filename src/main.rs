@@ -4,7 +4,7 @@ use color_eyre::eyre::Result;
 mod exchanges;
 mod utils;
 
-use exchanges::{binance, ibkr, kucoin, stockanalysis, woo};
+use exchanges::{binance, earningshub, ibkr, kucoin, stockanalysis, woo};
 
 #[derive(Parser)]
 #[command(name="Watchlist", version, about, long_about = None)]
@@ -29,6 +29,7 @@ enum Commands {
     StockAnalysis {
         etf: String,
     },
+    ThisWeek,
 }
 
 fn get_crypto_file_name(name: &str) -> String {
@@ -85,6 +86,12 @@ async fn main() -> Result<()> {
             let etf = etf.to_uppercase();
             let file_name = format!("- E - {etf}");
             utils::handle_file(&tickers, &file_name);
+        }
+        Commands::ThisWeek => {
+            let tickers = earningshub::get_this_week().await;
+
+            //println!("{tickers:#?}\n");
+            utils::handle_file(&tickers, "- Earnings - This Week");
         }
     }
     Ok(())

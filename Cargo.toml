@@ -9,6 +9,7 @@ anyhow = { version = "1.0.100", features = ["backtrace"] }
 clap = { version = "4.5.51", features = ["derive"] }
 color-eyre = "0.6.5"
 ibapi = "2.0.0"
+playwright = "0.0.20"
 regex = "1.12.2"
 reqwest = { version = "0.12.24", features = ["json"] }
 scraper = "0.24.0"

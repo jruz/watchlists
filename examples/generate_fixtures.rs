@@ -76,6 +76,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  ✓ Generated stockanalysis_spy.html");
     }
 
+    println!("→ Fetching EarningsHub data (this-week) with Playwright...");
+    {
+        use playwright::api::playwright::Playwright;
+
+        let playwright = Playwright::initialize().await?;
+        playwright.prepare()?;
+
+        let chromium = playwright.chromium();
+
+        let chromium_executable = std::env::var("PLAYWRIGHT_CHROMIUM_EXECUTABLE")
+            .expect("PLAYWRIGHT_CHROMIUM_EXECUTABLE not set. Run with: nix develop");
+
+        let browser = chromium
+            .launcher()
+            .headless(true)
+            .executable(std::path::Path::new(&chromium_executable))
+            .launch()
+            .await?;
+
+        let context = browser.context_builder().build().await?;
+        let page = context.new_page().await?;
+
+        page.goto_builder("https://earningshub.com/earnings-calendar/this-week")
+            .timeout(60000.0)
+            .goto()
+            .await?;
+
+        page.wait_for_timeout(10000.0).await;
+
+        let content = page.content().await?;
+        fs::write(fixture_path("earningshub_this_week.html"), &content)?;
+
+        browser.close().await?;
+        println!("  ✓ Generated earningshub_this_week.html");
+    }
+
     println!("\n✅ All fixtures generated successfully!");
     println!("   Location: tests/fixtures/");
 

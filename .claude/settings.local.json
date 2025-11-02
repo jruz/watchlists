@@ -10,7 +10,17 @@
       "Bash(cargo --version:*)",
       "Bash(rustc:*)",
       "WebSearch",
-      "Bash(cargo update:*)"
+      "Bash(cargo update:*)",
+      "Bash(cargo outdated:*)",
+      "Bash(cargo build:*)",
+      "Bash(just update:*)",
+      "Bash(just outdated:*)",
+      "WebFetch(domain:nixos.wiki)",
+      "Bash(nix develop:*)",
+      "Bash(just run:*)",
+      "WebFetch(domain:earningshub.com)",
+      "WebFetch(domain:docs.rs)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
