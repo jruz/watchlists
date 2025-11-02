@@ -66,7 +66,7 @@ generate-fixtures: clear
 
 check: clear
   nix develop --command cargo fmt --all -- --check
-  just lint-allows
+  nix develop --command just lint-allows
   nix develop --command cargo clippy --all-targets --all-features -- -D warnings
   nix develop --command cargo nextest run
 
