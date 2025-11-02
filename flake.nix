@@ -37,6 +37,7 @@
             nodejs
             openssl
             pkg-config
+            ripgrep
           ];
 
           shellHook = ''
