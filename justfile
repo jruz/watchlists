@@ -30,7 +30,6 @@ generate-fixtures: clear
 check: clear
   nix develop --command cargo fmt --all -- --check
   nix develop --command cargo clippy --all-targets --all-features -- -D warnings
-  nix develop --command cargo run --bin generate_fixtures
   nix develop --command cargo nextest run
 
 outdated: clear

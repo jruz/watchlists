@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,5 +24,25 @@ jobs:
     - name: Cache Nix store
       uses: DeterminateSystems/magic-nix-cache-action@v8
 
-    - name: Run CI checks
-      run: nix develop --command just check
+    - name: Check formatting
+      run: nix develop --command just fmt
+
+    - name: Run clippy (strict mode)
+      run: nix develop --command just lint
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v27
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+
+    - name: Cache Nix store
+      uses: DeterminateSystems/magic-nix-cache-action@v8
+
+    - name: Run tests
+      run: nix develop --command just test

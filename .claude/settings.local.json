@@ -34,7 +34,8 @@
       "Bash(gh pr create:*)",
       "Bash(cargo fmt:*)",
       "Bash(awk:*)",
-      "Bash(just ci:*)"
+      "Bash(just ci:*)",
+      "Bash(just check:*)"
     ],
     "deny": [],
     "ask": []
