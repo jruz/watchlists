@@ -35,6 +35,8 @@
             just
             playwright-driver.browsers
             nodejs
+            openssl
+            pkg-config
           ];
 
           shellHook = ''

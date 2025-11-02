@@ -2,13 +2,13 @@ use ibapi::accounts::PositionUpdate;
 use ibapi::prelude::SecurityType;
 use ibapi::Client;
 
-async fn get_client() -> Client {
+async fn get_client() -> Result<Client, Box<dyn std::error::Error>> {
     let connection_url = "127.0.0.1:7496";
 
-    println!("connecting to {}", connection_url);
-    let client = Client::connect(connection_url, 100).await.expect("connection to TWS failed!");
-    println!("connected successfully");
-    client
+    eprintln!("connecting to {connection_url}");
+    let client = Client::connect(connection_url, 100).await?;
+    eprintln!("connected successfully");
+    Ok(client)
 }
 
 pub struct Tickers {
@@ -17,12 +17,25 @@ pub struct Tickers {
 }
 
 pub async fn get_tickers() -> Tickers {
+    match get_tickers_impl().await {
+        Ok(tickers) => tickers,
+        Err(e) => {
+            eprintln!("Failed to get IBKR positions: {e}");
+            Tickers {
+                stocks: Vec::new(),
+                options: Vec::new(),
+            }
+        }
+    }
+}
+
+async fn get_tickers_impl() -> Result<Tickers, Box<dyn std::error::Error>> {
     let mut stocks = Vec::new();
     let mut options = Vec::new();
 
-    let client = get_client().await;
-    println!("Getting positions");
-    let mut subscription = client.positions().await.expect("error requesting positions");
+    let client = get_client().await?;
+    eprintln!("Getting positions");
+    let mut subscription = client.positions().await?;
 
     while let Some(position_result) = subscription.next().await {
         match position_result {
@@ -51,7 +64,7 @@ pub async fn get_tickers() -> Tickers {
                     let ticker = position.contract.symbol.to_string();
                     options.push(ticker);
                 }
-                _ => continue,
+                _ => {}
             },
             Ok(PositionUpdate::PositionEnd) => break,
             Err(e) => {
@@ -61,5 +74,5 @@ pub async fn get_tickers() -> Tickers {
         }
     }
 
-    Tickers { stocks, options }
+    Ok(Tickers { stocks, options })
 }

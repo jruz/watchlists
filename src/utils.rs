@@ -10,12 +10,12 @@ pub fn write_file(lines: &[String], name: &str) -> io::Result<()> {
         writeln!(writer, "{line}")?;
     }
 
-    writer.flush().into()
+    writer.flush()
 }
 
 pub fn handle_file(data: &[String], name: &str) {
     match write_file(data, name) {
-        Ok(()) => println!("{name}: {} tickers", &data.len()),
-        Err(e) => println!("Error: {e:#?}"),
+        Ok(()) => eprintln!("{name}: {} tickers", data.len()),
+        Err(e) => eprintln!("Error: {e:#?}"),
     }
 }
