@@ -29,7 +29,10 @@
       "Bash(just lint:*)",
       "Bash(grep:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nAdd strict clippy linting configuration and CI workflow\n\nImplement comprehensive linting rules enforced on every push to any branch:\n- Deny unwrap/expect/panic/todo/unimplemented/unreachable usage\n- Warn on integer/float arithmetic and indexing operations\n- Enable pedantic and nursery clippy lints\n- Add dedicated lint GitHub Actions workflow\n- Create strict lint just recipe for CI/local development\n\nCode improvements:\n- Replace expect/unwrap with proper error handling using Result types\n- Use checked arithmetic operations for date calculations\n- Convert all println! to eprintln! for proper error output\n- Add test-only lint allowances where appropriate\n- Fix type casting with safe From conversions\n- Improve error propagation throughout codebase\n\nThe lint workflow runs before tests to catch issues early and ensure\ncode quality standards are maintained across all branches.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(cargo fmt:*)"
     ],
     "deny": [],
     "ask": []

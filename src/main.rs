@@ -104,21 +104,26 @@ async fn main() -> Result<()> {
             let monday = match earnings_cmd {
                 EarningsCommands::ThisWeek => {
                     let days_since_monday = today.weekday().num_days_from_monday();
-                    today.checked_sub_signed(Duration::days(i64::from(days_since_monday)))
+                    today
+                        .checked_sub_signed(Duration::days(i64::from(days_since_monday)))
                         .unwrap_or(today)
                 }
                 EarningsCommands::NextWeek => {
                     let days_since_monday = today.weekday().num_days_from_monday();
-                    let this_monday = today.checked_sub_signed(Duration::days(i64::from(days_since_monday)))
+                    let this_monday = today
+                        .checked_sub_signed(Duration::days(i64::from(days_since_monday)))
                         .unwrap_or(today);
-                    this_monday.checked_add_signed(Duration::days(7))
+                    this_monday
+                        .checked_add_signed(Duration::days(7))
                         .unwrap_or(this_monday)
                 }
                 EarningsCommands::TwoWeeks => {
                     let days_since_monday = today.weekday().num_days_from_monday();
-                    let this_monday = today.checked_sub_signed(Duration::days(i64::from(days_since_monday)))
+                    let this_monday = today
+                        .checked_sub_signed(Duration::days(i64::from(days_since_monday)))
                         .unwrap_or(today);
-                    this_monday.checked_add_signed(Duration::days(14))
+                    this_monday
+                        .checked_add_signed(Duration::days(14))
                         .unwrap_or(this_monday)
                 }
             };

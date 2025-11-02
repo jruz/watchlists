@@ -64,7 +64,7 @@ async fn get_tickers_impl() -> Result<Tickers, Box<dyn std::error::Error>> {
                     let ticker = position.contract.symbol.to_string();
                     options.push(ticker);
                 }
-                _ => {},
+                _ => {}
             },
             Ok(PositionUpdate::PositionEnd) => break,
             Err(e) => {

@@ -37,7 +37,8 @@ async fn get_data() -> Result<Response, Box<dyn std::error::Error>> {
 }
 
 fn filter_symbols(response: Vec<Row>) -> Vec<String> {
-    response.iter()
+    response
+        .iter()
         .filter(|row| row.is_stable == 0 && row.is_trading == 1)
         .map(|row| row.symbol.clone())
         .collect()
@@ -194,10 +195,10 @@ mod tests {
             return;
         }
 
-        let fixture_data = std::fs::read_to_string(fixture_path)
-            .expect("Failed to read fixture file");
-        let response: Response = serde_json::from_str(&fixture_data)
-            .expect("Failed to parse fixture JSON");
+        let fixture_data =
+            std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
+        let response: Response =
+            serde_json::from_str(&fixture_data).expect("Failed to parse fixture JSON");
         let symbols = filter_symbols(response.rows);
 
         let perps = process_perp(&symbols);
@@ -206,12 +207,24 @@ mod tests {
         assert!(!perps.is_empty());
         assert!(perps.iter().all(|s| s.starts_with("WOONETWORK:")));
         assert!(perps.iter().all(|s| s.ends_with(".P")));
-        assert!(perps.contains(&"WOONETWORK:BTCUSDT.P".to_string()), "WOO should have BTC perp");
-        assert!(perps.contains(&"WOONETWORK:ETHUSDT.P".to_string()), "WOO should have ETH perp");
+        assert!(
+            perps.contains(&"WOONETWORK:BTCUSDT.P".to_string()),
+            "WOO should have BTC perp"
+        );
+        assert!(
+            perps.contains(&"WOONETWORK:ETHUSDT.P".to_string()),
+            "WOO should have ETH perp"
+        );
 
         assert!(!spots.is_empty());
         assert!(spots.iter().all(|s| s.starts_with("WOONETWORK:")));
-        assert!(spots.contains(&"WOONETWORK:BTCUSDT".to_string()), "WOO should have BTC spot");
-        assert!(spots.contains(&"WOONETWORK:ETHUSDT".to_string()), "WOO should have ETH spot");
+        assert!(
+            spots.contains(&"WOONETWORK:BTCUSDT".to_string()),
+            "WOO should have BTC spot"
+        );
+        assert!(
+            spots.contains(&"WOONETWORK:ETHUSDT".to_string()),
+            "WOO should have ETH spot"
+        );
     }
 }

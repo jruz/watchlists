@@ -5,4 +5,3 @@ pub mod ibkr;
 pub mod kucoin;
 pub mod stockanalysis;
 pub mod woo;
-

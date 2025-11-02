@@ -45,7 +45,8 @@ pub fn process_data(response: Response) -> Vec<String> {
         "TUSD", "USDC", "BUSD", "EUR", "GBP", "PAX", "DAI", "AUD", "USDP", "FDUSD", "WBTC",
     ];
 
-    response.symbols
+    response
+        .symbols
         .iter()
         .filter(|row| {
             row.status == "TRADING"
@@ -195,10 +196,10 @@ mod tests {
             return;
         }
 
-        let fixture_data = std::fs::read_to_string(fixture_path)
-            .expect("Failed to read fixture file");
-        let response: Response = serde_json::from_str(&fixture_data)
-            .expect("Failed to parse fixture JSON");
+        let fixture_data =
+            std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
+        let response: Response =
+            serde_json::from_str(&fixture_data).expect("Failed to parse fixture JSON");
 
         let result = process_data(response);
 
@@ -207,7 +208,13 @@ mod tests {
         assert!(result.iter().all(|s| s.contains("USDT")));
         assert!(result.iter().all(|s| s.contains(':')));
 
-        assert!(result.contains(&"BINANCE:BTCUSDT".to_string()), "Binance should have BTC");
-        assert!(result.contains(&"BINANCE:ETHUSDT".to_string()), "Binance should have ETH");
+        assert!(
+            result.contains(&"BINANCE:BTCUSDT".to_string()),
+            "Binance should have BTC"
+        );
+        assert!(
+            result.contains(&"BINANCE:ETHUSDT".to_string()),
+            "Binance should have ETH"
+        );
     }
 }

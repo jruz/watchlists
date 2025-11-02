@@ -10,7 +10,9 @@ pub async fn get_earnings_week(week_date: &str) -> Vec<String> {
     }
 }
 
-async fn get_earnings_week_impl(week_date: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+async fn get_earnings_week_impl(
+    week_date: &str,
+) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let playwright = Playwright::initialize().await?;
     playwright.prepare()?;
 
@@ -26,20 +28,12 @@ async fn get_earnings_week_impl(week_date: &str) -> Result<Vec<String>, Box<dyn 
         .launch()
         .await?;
 
-    let context = browser
-        .context_builder()
-        .build()
-        .await?;
+    let context = browser.context_builder().build().await?;
 
-    let page = context
-        .new_page()
-        .await?;
+    let page = context.new_page().await?;
 
     let url = format!("https://earningshub.com/earnings-calendar/week-of/{week_date}");
-    page.goto_builder(&url)
-        .timeout(60_000.0)
-        .goto()
-        .await?;
+    page.goto_builder(&url).timeout(60_000.0).goto().await?;
 
     page.wait_for_timeout(15_000.0).await;
 
@@ -70,10 +64,7 @@ async fn extract_tickers(page: &Page) -> Vec<String> {
     let result = page.evaluate(js_code, ()).await;
 
     match result {
-        Ok(value) => {
-            serde_json::from_value(value)
-                .unwrap_or_else(|_| Vec::new())
-        }
+        Ok(value) => serde_json::from_value(value).unwrap_or_else(|_| Vec::new()),
         Err(e) => {
             eprintln!("Failed to extract tickers: {e}");
             Vec::new()
@@ -95,17 +86,24 @@ mod tests {
             return;
         }
 
-        let html = std::fs::read_to_string(fixture_path)
-            .expect("Failed to read fixture file");
+        let html = std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
 
-        assert!(html.contains("Earnings Hub"), "Fixture should contain Earnings Hub page");
-        assert!(html.contains("earnings-calendar"), "Fixture should reference earnings calendar");
+        assert!(
+            html.contains("Earnings Hub"),
+            "Fixture should contain Earnings Hub page"
+        );
+        assert!(
+            html.contains("earnings-calendar"),
+            "Fixture should reference earnings calendar"
+        );
 
-        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)")
-            .expect("Failed to compile regex");
+        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)").expect("Failed to compile regex");
         let ticker_count = re.captures_iter(&html).count();
 
-        assert!(ticker_count > 0, "Fixture should contain at least one ticker symbol in URL parameters");
+        assert!(
+            ticker_count > 0,
+            "Fixture should contain at least one ticker symbol in URL parameters"
+        );
     }
 
     #[test]
@@ -119,8 +117,7 @@ mod tests {
 
         let mut tickers = Vec::new();
         let mut seen = std::collections::HashSet::new();
-        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)")
-            .expect("Failed to compile regex");
+        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)").expect("Failed to compile regex");
 
         for cap in re.captures_iter(html) {
             if let Some(symbol) = cap.get(1) {
@@ -150,8 +147,7 @@ mod tests {
 
         let mut tickers = Vec::new();
         let mut seen = std::collections::HashSet::new();
-        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)")
-            .expect("Failed to compile regex");
+        let re = regex::Regex::new(r"[?&]symbol=([A-Z0-9.-]+)").expect("Failed to compile regex");
 
         for cap in re.captures_iter(html) {
             if let Some(symbol) = cap.get(1) {

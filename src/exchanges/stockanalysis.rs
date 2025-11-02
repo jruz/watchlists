@@ -139,8 +139,17 @@ mod tests {
         assert!(!tickers.is_empty());
         assert!(tickers.iter().all(|t| !t.is_empty()));
 
-        assert!(tickers.contains(&"AAPL".to_string()), "SPY should contain AAPL");
-        assert!(tickers.contains(&"MSFT".to_string()), "SPY should contain MSFT");
-        assert!(tickers.contains(&"NVDA".to_string()), "SPY should contain NVDA");
+        assert!(
+            tickers.contains(&"AAPL".to_string()),
+            "SPY should contain AAPL"
+        );
+        assert!(
+            tickers.contains(&"MSFT".to_string()),
+            "SPY should contain MSFT"
+        );
+        assert!(
+            tickers.contains(&"NVDA".to_string()),
+            "SPY should contain NVDA"
+        );
     }
 }

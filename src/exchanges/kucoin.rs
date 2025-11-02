@@ -59,16 +59,26 @@ pub fn process_data(mut tickers: Vec<ResponseTicker>) -> Vec<String> {
         return Vec::new();
     };
 
-    tickers.sort_by(|a, b| b.vol.partial_cmp(&a.vol).unwrap_or(std::cmp::Ordering::Equal));
+    tickers.sort_by(|a, b| {
+        b.vol
+            .partial_cmp(&a.vol)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
-    tickers.iter()
+    tickers
+        .iter()
         .filter_map(|row| {
             let parts: Vec<&str> = row.symbol.split('-').collect();
             let base = parts.get(0)?;
             let quote = parts.get(1)?;
             Some(((*base).to_string(), (*quote).to_string()))
         })
-        .filter(|(base, quote)| quote == "USDT" && !regex.is_match(base) && !base.ends_with("UP") && !base.ends_with("DOWN"))
+        .filter(|(base, quote)| {
+            quote == "USDT"
+                && !regex.is_match(base)
+                && !base.ends_with("UP")
+                && !base.ends_with("DOWN")
+        })
         .map(|(base, _)| base)
         .collect()
 }
@@ -90,7 +100,6 @@ pub async fn get_spot() -> Vec<String> {
         }
     }
 }
-
 
 #[cfg(test)]
 #[allow(clippy::indexing_slicing, clippy::expect_used)]
@@ -186,11 +195,7 @@ mod tests {
             },
         ];
         let result = process_data(data);
-        let expected = vec![
-          "BTC".to_string(),
-          "ETH".to_string(),
-          "SUPER".to_string(),
-        ];
+        let expected = vec!["BTC".to_string(), "ETH".to_string(), "SUPER".to_string()];
 
         assert_eq!(result, expected)
     }
@@ -218,18 +223,23 @@ mod tests {
             return;
         }
 
-        let fixture_data = std::fs::read_to_string(fixture_path)
-            .expect("Failed to read fixture file");
-        let response: Response = serde_json::from_str(&fixture_data)
-            .expect("Failed to parse fixture JSON");
+        let fixture_data =
+            std::fs::read_to_string(fixture_path).expect("Failed to read fixture file");
+        let response: Response =
+            serde_json::from_str(&fixture_data).expect("Failed to parse fixture JSON");
         let tickers: Vec<String> = get_spot_impl(response);
 
         assert!(!tickers.is_empty());
         assert!(tickers.iter().all(|s| s.starts_with("KUCOIN:")));
         assert!(tickers.iter().all(|s| s.contains("USDT")));
 
-        assert!(tickers.contains(&"KUCOIN:BTCUSDT".to_string()), "KuCoin should have BTC");
-        assert!(tickers.contains(&"KUCOIN:ETHUSDT".to_string()), "KuCoin should have ETH");
+        assert!(
+            tickers.contains(&"KUCOIN:BTCUSDT".to_string()),
+            "KuCoin should have BTC"
+        );
+        assert!(
+            tickers.contains(&"KUCOIN:ETHUSDT".to_string()),
+            "KuCoin should have ETH"
+        );
     }
-
 }
